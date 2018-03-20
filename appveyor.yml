@@ -11,3 +11,11 @@ build_script:
   - msbuild libideviceactivation.sln /p:Configuration=Release /p:Platform=x86 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
   - msbuild libideviceactivation.sln /p:Configuration=Debug /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
   - msbuild libideviceactivation.sln /p:Configuration=Release /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
+
+  - cmd: choco install wget
+  - cmd: wget http://coapp.org/files/CoApp.Tools.Powershell.msi
+  - cmd: start /wait msiexec /qb /i CoApp.Tools.Powershell.msi
+  - ps: .\CreateNuGetPackage.ps1 -Build $ENV:APPVEYOR_BUILD_NUMBER
+
+artifacts:
+  - path: libideviceactivation.*.nupkg
