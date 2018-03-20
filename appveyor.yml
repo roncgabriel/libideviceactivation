@@ -1,0 +1,13 @@
+before_build:
+  - nuget restore
+  # Update version with build number
+  - ps: (Get-Content Resource.rc -Raw) | Foreach-Object {$_ -replace "(?<version>\d[,|\.]\d[,|\.]\d[,|\.])\d", "`${version}$env:APPVEYOR_BUILD_NUMBER" } | Set-Content Resource.rc
+
+cache:
+  - packages -> **\packages.config      # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
+
+build_script:
+  - msbuild libideviceactivation.sln /p:Configuration=Debug /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
+  - msbuild libideviceactivation.sln /p:Configuration=Release /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
+  - msbuild libideviceactivation.sln /p:Configuration=Debug /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
+  - msbuild libideviceactivation.sln /p:Configuration=Release /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
