@@ -1,0 +1,60 @@
+configurations {
+    Toolset { 
+        key : "PlatformToolset"; 
+        choices: { v140 };  
+        // Explicitly Not including pivot variants:  "WindowsKernelModeDriver8.0", "WindowsApplicationForDrivers8.0", "WindowsUserModeDriver8.0" 
+
+        // We're normalizing out the concept of the v140 platform -- Overloading the $(PlatformToolset) variable for additional pivots was a dumb idea.
+        v140.condition = "( $(PlatformToolset.ToLower().IndexOf('v140')) > -1 Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' )";
+    };
+}
+
+nuget{
+    nuspec{
+        id = libideviceactivation;
+        version : 1.0.0.{build};
+        title: libideviceactivation;
+        authors: {libideviceactivation Project};
+        owners: {quamotion};
+        licenseUrl: "http://opensource.org/licenses/LGPL-2.1";
+        projectUrl: "http://www.libimobiledevice.org/";
+        iconUrl: "http://www.nuget.org/Content/Images/packageDefaultIcon-50x50.png";
+        requireLicenseAcceptance:false;
+        description: "A library to handle the activation process of iOS devices.";
+        summary: "A library to handle the activation process of iOS devices.";
+        copyright: "https://github.com/libimobiledevice/libideviceactivation/blob/master/AUTHORS";
+        releaseNotes: "See https://github.com/libimobiledevice-win32/libideviceactivation for more.";
+        tags: { libideviceactivation, libimobiledevice, native };
+    }
+
+    files{
+	includeplist: {
+		#destination = ${d_include}libideviceactivation;
+		"include\*.h";
+	} 
+
+	[x86,v140,debug] {
+            lib: Win32\Debug\ideviceactivation.lib;
+            bin: { "Win32\Debug\ideviceactivation.dll" };
+            symbols: Win32\Debug\ideviceactivation.pdb;
+        }
+
+	[x86,v140,release] {
+            lib: Win32\Release\ideviceactivation.lib;
+            bin: { "Win32\Release\ideviceactivation.dll" };
+            symbols: Win32\Release\ideviceactivation.pdb;
+        }
+
+	[x64,v140,debug] {
+            lib: x64\Debug\ideviceactivation.lib;
+            bin: { "x64\Debug\ideviceactivation.dll" };
+            symbols: x64\Debug\ideviceactivation.pdb;
+        }
+
+	[x64,v140,release] {
+            lib: x64\Release\ideviceactivation.lib;
+            bin: { "x64\Release\ideviceactivation.dll" };
+            symbols: x64\Release\ideviceactivation.pdb;
+        }
+    }
+}
