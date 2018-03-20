@@ -29,3 +29,8 @@ src/.libs
 tools/.libs
 tools/ideviceactivation
 stamp-h1
+.vs/
+packages/
+x64/
+Win32/
+*.user
