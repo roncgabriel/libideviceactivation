@@ -28,8 +28,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _MSC_VER
+#define PACKAGE_VERSION "1.0"
+#else
 #include <unistd.h>
+<<<<<<< HEAD
 #include <ctype.h>
+=======
+#endif
+
+>>>>>>> Create Visual Studio project for ideviceactivation executable
 
 #include <plist/plist.h>
 #include <libimobiledevice/lockdown.h>
