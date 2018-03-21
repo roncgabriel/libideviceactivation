@@ -35,25 +35,25 @@ nuget{
 
 	[x86,v140,debug] {
             lib: Win32\Debug\ideviceactivation.lib;
-            bin: { "Win32\Debug\ideviceactivation.dll" };
+            bin: { "Win32\Debug\ideviceactivation.dll", "tools\Win32\Debug\ideviceactivation.exe" };
             symbols: Win32\Debug\ideviceactivation.pdb;
         }
 
 	[x86,v140,release] {
             lib: Win32\Release\ideviceactivation.lib;
-            bin: { "Win32\Release\ideviceactivation.dll" };
+            bin: { "Win32\Release\ideviceactivation.dll", "tools\Win32\Release\ideviceactivation.exe"  };
             symbols: Win32\Release\ideviceactivation.pdb;
         }
 
 	[x64,v140,debug] {
             lib: x64\Debug\ideviceactivation.lib;
-            bin: { "x64\Debug\ideviceactivation.dll" };
+            bin: { "x64\Debug\ideviceactivation.dll", "tools\x64\Debug\ideviceactivation.exe"  };
             symbols: x64\Debug\ideviceactivation.pdb;
         }
 
 	[x64,v140,release] {
             lib: x64\Release\ideviceactivation.lib;
-            bin: { "x64\Release\ideviceactivation.dll" };
+            bin: { "x64\Release\ideviceactivation.dll", "tools\x64\Release\ideviceactivation.exe"  };
             symbols: x64\Release\ideviceactivation.pdb;
         }
     }
