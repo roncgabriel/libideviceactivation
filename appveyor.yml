@@ -1,21 +1,20 @@
+environment:
+  VCPKG_ROOT: C:\tools\vcpkg-libimobiledevice
+
 before_build:
-  - nuget restore
+  - vcpkg version
+  - git clone -q --depth 1 -b ports/libimobiledevice https://github.com/libimobiledevice-win32/vcpkg %VCPKG_ROOT%
+  - cmd: "%VCPKG_ROOT%\\bootstrap-vcpkg.bat"
+  - cmd: "%VCPKG_ROOT%\\vcpkg version"
+  - cmd: "%VCPKG_ROOT%\\vcpkg integrate install"
+  - cmd: "%VCPKG_ROOT%\\vcpkg install libimobiledevice:x86-windows libxml2:x86-windows curl:x86-windows"
+  - cmd: "%VCPKG_ROOT%\\vcpkg install libimobiledevice:x64-windows libxml2:x64-windows curl:x64-windows"
+
   # Update version with build number
   - ps: (Get-Content Resource.rc -Raw) | Foreach-Object {$_ -replace "(?<version>\d[,|\.]\d[,|\.]\d[,|\.])\d", "`${version}$env:APPVEYOR_BUILD_NUMBER" } | Set-Content Resource.rc
 
-cache:
-  - packages -> **\packages.config      # preserve "packages" directory in the root of build folder but will reset it if packages.config is modified
-
 build_script:
-  - msbuild libideviceactivation.sln /p:Configuration=Debug /p:Platform=x86 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
-  - msbuild libideviceactivation.sln /p:Configuration=Release /p:Platform=x86 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
+  - msbuild libideviceactivation.sln /p:Configuration=Debug /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
+  - msbuild libideviceactivation.sln /p:Configuration=Release /p:Platform=Win32 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
   - msbuild libideviceactivation.sln /p:Configuration=Debug /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
   - msbuild libideviceactivation.sln /p:Configuration=Release /p:Platform=x64 /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /m
-
-  - cmd: choco install wget
-  - cmd: wget http://coapp.org/files/CoApp.Tools.Powershell.msi
-  - cmd: start /wait msiexec /qb /i CoApp.Tools.Powershell.msi
-  - ps: .\CreateNuGetPackage.ps1 -Build $ENV:APPVEYOR_BUILD_NUMBER
-
-artifacts:
-  - path: libideviceactivation.*.nupkg
