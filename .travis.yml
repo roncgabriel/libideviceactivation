@@ -64,6 +64,7 @@ script:
 
 after_success:
 - make install
+- if [ "$TRAVIS_OS_NAME" = "osx" ]; then ./build/patchdylib.sh; fi
 - tar -zcvf libideviceactivation-$RID.tar.gz -C $HOME/out .
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then az=$HOME/Library/Python/2.7/bin/az; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then az=$HOME/.local/bin/az; fi
