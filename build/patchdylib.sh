@@ -28,5 +28,8 @@ for f in $HOME/out/{bin,lib}/*; do
      install_name_tool -change $dylib @loader_path/libideviceactivation.dylib $f
    done;
 
+   install_name_tool -change /usr/local/opt/openssl/lib/libssl.1.0.0.dylib @loader_path/libssl.1.0.0.dylib $f
+   install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib @loader_path/libcrypto.1.0.0.dylib $f
+
    otool -L $f
 done
