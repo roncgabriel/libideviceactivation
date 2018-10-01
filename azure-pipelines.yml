@@ -1,0 +1,198 @@
+variables:
+  libplistBuild: 56
+  libplistPipeline: 2
+  libusbmuxdBuild: 57
+  libusbmuxdPipeline: 3
+  libimobiledeviceBuild: 66
+  libimobiledevicePipeline: 4
+
+jobs:
+- job: windows
+  strategy:
+    maxParallel: 2
+    matrix:
+      x64:
+        BUILD_ARCH: x64
+        PLATFORM: x64
+        RID: win7-x64
+      x86:
+        BUILD_ARCH: x86
+        PLATFORM: Win32
+        RID: win7-x86
+  pool:
+    vmImage: 'vs2017-win2016'
+  steps:
+  - script: |
+      git clone https://github.com/microsoft/vcpkg
+      vcpkg\bootstrap-vcpkg.bat
+    displayName: Install vcpkg
+  - script: |
+      vcpkg\vcpkg version
+      vcpkg\vcpkg integrate install
+      set VCPKG_BUILD_TYPE=release
+      vcpkg\vcpkg install libplist:%BUILD_ARCH%-windows libusbmuxd:%BUILD_ARCH%-windows libimobiledevice:%BUILD_ARCH%-windows --head
+      vcpkg\vcpkg install libxml2:%BUILD_ARCH%-windows curl:%BUILD_ARCH%-windows
+    displayName: Install native dependencies
+  - powershell: |
+      (Get-Content Resource.rc -Raw) | Foreach-Object {$_ -replace "(?<version>\d[,|\.]\d[,|\.]\d[,|\.])\d", "`${version}$env:BUILD_BUILDID" } | Set-Content Resource.rc
+    displayName: Update version number
+  - task: MSBuild@1
+    inputs:
+      solution: 'libideviceactivation.sln' 
+      platform: $(PLATFORM)
+      configuration: Release
+    displayName: 'Release build'
+  - task: MSBuild@1
+    inputs:
+      solution: 'libideviceactivation.sln' 
+      platform: $(PLATFORM)
+      configuration: Debug
+    displayName: 'Debug build'
+  - script: |
+      mkdir %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\bin\
+      mkdir %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\licenses\
+      copy %PLATFORM%\Release\ideviceactivation.dll %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\bin\
+      copy tools\%PLATFORM%\Release\*.exe %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\bin\
+      copy vcpkg\installed\%BUILD_ARCH%-windows\bin\libxml2.dll %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\bin\
+      copy vcpkg\installed\%BUILD_ARCH%-windows\share\libxml2\copyright %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\licenses\libxml2.copyright
+      copy vcpkg\installed\%BUILD_ARCH%-windows\bin\libcharset.dll %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\bin\
+      copy vcpkg\installed\%BUILD_ARCH%-windows\bin\libiconv.dll %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\bin\
+      copy vcpkg\installed\%BUILD_ARCH%-windows\share\libiconv\copyright %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\licenses\libiconv.copyright
+      copy vcpkg\installed\%BUILD_ARCH%-windows\bin\lzma.dll %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\bin\
+      copy vcpkg\installed\%BUILD_ARCH%-windows\share\liblzma\copyright %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\licenses\liblzma.copyright
+      copy vcpkg\installed\%BUILD_ARCH%-windows\bin\libcurl.dll %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\bin\
+      copy vcpkg\installed\%BUILD_ARCH%-windows\share\curl\copyright %BUILD_ARTIFACTSTAGINGDIRECTORY%\libideviceactivation\%RID%\licenses\libcurl.copyright
+    displayName: 'Install'
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)/libideviceactivation/' 
+      artifactName: 'libideviceactivation' 
+      publishLocation: 'Container'
+    displayName: Publish
+
+- job: macos
+  pool:
+    vmImage: 'xcode9-macos10.13'
+  variables:
+    TARGET: x86_64-apple-darwin
+    RID: osx-x64
+  steps:
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: 'specific'
+      project: 'imobiledevice-net'
+      pipeline: $(libplistPipeline)
+      buildVersionToDownload: 'specific'
+      buildId: $(libplistBuild)
+      downloadType: 'single'
+      artifactName: 'libplist'
+      downloadPath: '$(System.ArtifactsDirectory)'
+    displayName: 'Download libplist artifacts'
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: 'specific'
+      project: 'imobiledevice-net'
+      pipeline: $(libusbmuxdPipeline)
+      buildVersionToDownload: 'specific'
+      buildId: $(libusbmuxdBuild)
+      downloadType: 'single'
+      artifactName: 'libusbmuxd'
+      downloadPath: '$(System.ArtifactsDirectory)'
+    displayName: 'Download libusbmuxd artifacts'
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: 'specific'
+      project: 'imobiledevice-net'
+      pipeline: $(libimobiledevicePipeline)
+      buildVersionToDownload: 'specific'
+      buildId: $(libimobiledeviceBuild)
+      downloadType: 'single'
+      artifactName: 'libimobiledevice'
+      downloadPath: '$(System.ArtifactsDirectory)'
+    displayName: 'Download libimobiledevice artifacts'
+  - script: |
+      brew install autoconf automake libtool pkg-config openssl
+    displayName: Install autotools, openSSL
+  - script: |
+      export PKG_CONFIG_PATH="$SYSTEM_ARTIFACTSDIRECTORY/libplist/$RID/lib/pkgconfig:$PKG_CONFIG_PATH"
+      export PKG_CONFIG_PATH="$SYSTEM_ARTIFACTSDIRECTORY/libusbmuxd/$RID/lib/pkgconfig:$PKG_CONFIG_PATH"
+      export PKG_CONFIG_PATH="$SYSTEM_ARTIFACTSDIRECTORY/libimobiledevice/$RID/lib/pkgconfig:$PKG_CONFIG_PATH"
+      export PKG_CONFIG_PATH="$(brew --prefix)/opt/openssl/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+      ./autogen.sh --prefix=$BUILD_ARTIFACTSTAGINGDIRECTORY/libideviceactivation/$RID --host=$TARGET --without-cython --enable-static=no --enable-shared=yes
+      make
+    displayName: Build
+  - script: |
+      make install
+
+      export INSTALLDIR=$SYSTEM_ARTIFACTSDIRECTORY/libideviceactivation/$RID
+      ./build/patchdylib.sh
+    displayName: Install
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)/libideviceactivation' 
+      artifactName: 'libideviceactivation' 
+      publishLocation: 'Container'
+    displayName: Publish
+
+- job: linux
+  variables:
+    TARGET: x86_64-unknown-linux-gnu
+    RID: ubuntu.16.04-x64
+    CFLAGS: -fPIC
+  pool:
+    vmImage: 'ubuntu-16.04'
+  steps:
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: 'specific'
+      project: 'imobiledevice-net'
+      pipeline: $(libplistPipeline)
+      buildVersionToDownload: 'specific'
+      buildId: $(libplistBuild)
+      downloadType: 'single'
+      artifactName: 'libplist'
+      downloadPath: '$(System.ArtifactsDirectory)'
+    displayName: 'Download libplist artifacts'
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: 'specific'
+      project: 'imobiledevice-net'
+      pipeline: $(libusbmuxdPipeline)
+      buildVersionToDownload: 'specific'
+      buildId: $(libusbmuxdBuild)
+      downloadType: 'single'
+      artifactName: 'libusbmuxd'
+      downloadPath: '$(System.ArtifactsDirectory)'
+    displayName: 'Download libusbmuxd artifacts'
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: 'specific'
+      project: 'imobiledevice-net'
+      pipeline: $(libimobiledevicePipeline)
+      buildVersionToDownload: 'specific'
+      buildId: $(libimobiledeviceBuild)
+      downloadType: 'single'
+      artifactName: 'libimobiledevice'
+      downloadPath: '$(System.ArtifactsDirectory)'
+    displayName: 'Download libimobiledevice artifacts'
+  - script: |
+      sudo apt-get install -y libssl-dev libcurl4-openssl-dev
+    displayName: Install autotools, openSSL
+  - script: |
+      export PKG_CONFIG_PATH="$SYSTEM_ARTIFACTSDIRECTORY/libplist/$RID/lib/pkgconfig:$PKG_CONFIG_PATH"
+      export PKG_CONFIG_PATH="$SYSTEM_ARTIFACTSDIRECTORY/libusbmuxd/$RID/lib/pkgconfig:$PKG_CONFIG_PATH"
+      export PKG_CONFIG_PATH="$SYSTEM_ARTIFACTSDIRECTORY/libimobiledevice/$RID/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+      ./autogen.sh --prefix=$BUILD_ARTIFACTSTAGINGDIRECTORY/libideviceactivation/$RID --host=$TARGET --without-cython --enable-static=no --enable-shared=yes --enable-openssl
+      make
+    displayName: Build
+  - script: |
+      make install
+    displayName: Install
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)/libideviceactivation'
+      artifactName: 'libideviceactivation' 
+      publishLocation: 'Container'
+    displayName: Publish
