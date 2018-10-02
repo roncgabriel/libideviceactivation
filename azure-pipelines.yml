@@ -127,6 +127,9 @@ jobs:
 
       export INSTALLDIR=$SYSTEM_ARTIFACTSDIRECTORY/libideviceactivation/$RID
       ./build/patchdylib.sh
+
+      echo $BUILD_REPOSITORY_URI\n >> $BUILD_ARTIFACTSTAGINGDIRECTORY/libideviceactivation/$RID/gitinfo
+      echo $BUILD_SOURCEVERSION >> $BUILD_ARTIFACTSTAGINGDIRECTORY/libideviceactivation/$RID/gitinfo
     displayName: Install
   - task: PublishBuildArtifacts@1
     inputs:
@@ -189,6 +192,9 @@ jobs:
     displayName: Build
   - script: |
       make install
+
+      echo $BUILD_REPOSITORY_URI\n >> $BUILD_ARTIFACTSTAGINGDIRECTORY/libideviceactivation/$RID/gitinfo
+      echo $BUILD_SOURCEVERSION >> $BUILD_ARTIFACTSTAGINGDIRECTORY/libideviceactivation/$RID/gitinfo
     displayName: Install
   - task: PublishBuildArtifacts@1
     inputs:
