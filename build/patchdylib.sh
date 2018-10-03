@@ -4,7 +4,7 @@
 # Redirect from libimobiledevice.6.dylib in the out folder to libimobiledevice.dylib
 # in the folder where the executable is located (this will be the setup in our target
 # environment)
-for f in $INSTALLDIR/bin/*; do
+for f in $INSTALLDIR/{bin/*,lib/*.dylib}; do
    for l in libplist libusbmuxd libimobiledevice libideviceactivation; do
      chmod +w $f
 
