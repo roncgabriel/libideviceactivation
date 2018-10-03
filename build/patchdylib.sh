@@ -5,7 +5,7 @@
 # in the folder where the executable is located (this will be the setup in our target
 # environment)
 for f in $INSTALLDIR/bin/*; do
-   for l in libplist libusbmuxd libimobiledevice libideviceactivation do
+   for l in libplist libusbmuxd libimobiledevice libideviceactivation; do
      chmod +w $f
 
      # Skip the first line of the otool output, this is just the header
