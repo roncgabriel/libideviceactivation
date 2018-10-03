@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Patch the so dependencies for all executables in the out directory 
 # Redirect from libimobiledevice.so.6 to libimobiledevice.so,
@@ -11,7 +11,7 @@
 
 patchelf=patchelf-0.9/src/patchelf
 
-for f in $INSTALLDIR/bin/*; do
+for f in $INSTALLDIR/{bin,lib}/*; do
    chmod +w $f
 
    $patchelf --set-rpath '${ORIGIN}' $f
